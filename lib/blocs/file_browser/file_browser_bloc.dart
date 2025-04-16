@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as path;
 import 'file_browser_event.dart';
 import 'file_browser_state.dart';
@@ -7,8 +8,8 @@ import '../../services/ftp_service.dart';
 class FileBrowserBloc extends Bloc<FileBrowserEvent, FileBrowserState> {
   final FtpService _ftpService;
 
-  FileBrowserBloc({required FtpService ftpService})
-      : _ftpService = ftpService,
+  FileBrowserBloc()
+      : _ftpService = GetIt.I<FtpService>(),
         super(const FileBrowserState()) {
     on<LoadDirectory>(_onLoadDirectory);
     on<CreateDirectory>(_onCreateDirectory);

@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:get_it/get_it.dart';
 import 'ftp_connection_event.dart';
 import 'ftp_connection_state.dart';
 import '../../services/ftp_service.dart';
@@ -9,9 +10,9 @@ class FtpConnectionBloc extends Bloc<FtpConnectionEvent, FtpConnectionState> {
   final Connectivity _connectivity;
 
   FtpConnectionBloc({
-    required FtpService ftpService,
+
     required Connectivity connectivity,
-  })  : _ftpService = ftpService,
+  })  : _ftpService = GetIt.I<FtpService>(),
         _connectivity = connectivity,
         super(const FtpConnectionState()) {
     on<FtpConnect>(_onFtpConnect);

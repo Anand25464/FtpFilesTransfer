@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import '../blocs/ftp_connection/ftp_connection_bloc.dart';
 import '../blocs/ftp_connection/ftp_connection_state.dart';
 
-class ConnectionStatusWidget extends StatelessWidget {
+class ConnectionStatusWidget extends StatefulWidget {
   const ConnectionStatusWidget({Key? key}) : super(key: key);
+
+  @override
+  State<ConnectionStatusWidget> createState() => _ConnectionStatusWidgetState();
+}
+
+class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
+  FtpConnectionBloc _ftpConnectionBloc = GetIt.I<FtpConnectionBloc>();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FtpConnectionBloc, FtpConnectionState>(
+      bloc: _ftpConnectionBloc,
       builder: (context, state) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

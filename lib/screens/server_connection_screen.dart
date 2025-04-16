@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ftp_file_transfer/utils/ip_input_formatter.dart';
+import 'package:get_it/get_it.dart';
 import '../blocs/ftp_connection/ftp_connection_bloc.dart';
 import '../blocs/ftp_connection/ftp_connection_event.dart';
 import '../blocs/ftp_connection/ftp_connection_state.dart';
@@ -22,6 +24,7 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
   final _passwordController = TextEditingController(text: '1234');
   bool _anonymous = false;
   bool _savePassword = true;
+  FtpConnectionBloc _ftpConnectionBloc = GetIt.I<FtpConnectionBloc>();
 
   @override
   void dispose() {
@@ -40,6 +43,7 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
         title: const Text('Connect to FTP Server'),
       ),
       body: BlocConsumer<FtpConnectionBloc, FtpConnectionState>(
+        bloc: _ftpConnectionBloc,
         listener: (context, state) {
           if (state.status == FtpConnectionStatus.connected) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -120,6 +124,10 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _hostController,
+                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              IpInputFormatter(),
+                            ],
                             decoration: const InputDecoration(
                               labelText: 'Host',
                               prefixIcon: Icon(Icons.dns),
@@ -128,6 +136,8 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter the server host';
+                              }else if(!isValidIp(value)){
+                                return 'Please enter a valid IP address';
                               }
                               return null;
                             },
@@ -234,6 +244,16 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
     );
   }
 
+  bool isValidIp(String ip) {
+    final parts = ip.split('.');
+    if (parts.length != 4) return false;
+    for (final part in parts) {
+      final num = int.tryParse(part);
+      if (num == null || num < 0 || num > 255) return false;
+    }
+    return true;
+  }
+
   void _connectToServer() {
     if (_formKey.currentState?.validate() ?? false) {
       final server = FtpServer(
@@ -246,7 +266,7 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
         savePassword: _savePassword,
       );
 
-      context.read<FtpConnectionBloc>().add(FtpConnect(server));
+      GetIt.I<FtpConnectionBloc>().add(FtpConnect(server));
     }
   }
 }

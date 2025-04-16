@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ftp_file_transfer/blocs/file_browser/file_browser_bloc.dart';
+import 'package:ftp_file_transfer/blocs/file_browser/file_browser_event.dart';
+import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import '../blocs/file_transfer/file_transfer_bloc.dart';
 import '../models/transfer_stats.dart';
@@ -20,7 +23,8 @@ class FileTransferScreen extends StatefulWidget {
 
 class _FileTransferScreenState extends State<FileTransferScreen> {
   bool _transferStarted = false;
-
+  FileTransferBloc _fileTransferBloc = GetIt.I<FileTransferBloc>();
+  FileBrowserBloc _fileBrowserBloc = GetIt.I<FileBrowserBloc>();
   @override
   void initState() {
     super.initState();
@@ -36,7 +40,7 @@ class _FileTransferScreenState extends State<FileTransferScreen> {
       final localPath = widget.transferParams['localPath'] as String;
       final remotePath = widget.transferParams['remotePath'] as String;
       
-      context.read<FileTransferBloc>().add(
+      _fileTransferBloc.add(
             StartUpload(
               localPath: localPath,
               remotePath: remotePath,
@@ -49,7 +53,7 @@ class _FileTransferScreenState extends State<FileTransferScreen> {
       // Get downloads directory for saving files
       final downloadsDir = await _getDownloadsDirectory();
       
-      context.read<FileTransferBloc>().add(
+      _fileTransferBloc.add(
             StartDownload(
               remotePath: remotePath,
               localPath: downloadsDir.path,
@@ -95,6 +99,7 @@ class _FileTransferScreenState extends State<FileTransferScreen> {
         title: Text(isUpload ? 'Uploading File' : 'Downloading File'),
       ),
       body: BlocConsumer<FileTransferBloc, FileTransferState>(
+        bloc: _fileTransferBloc,
         listener: (context, state) {
           if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +123,7 @@ class _FileTransferScreenState extends State<FileTransferScreen> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                
+                _fileBrowserBloc.add(RefreshCurrentDirectory());
                 // Navigate back after a short delay
                 Future.delayed(const Duration(seconds: 2), () {
                   if (mounted) {
@@ -197,7 +202,7 @@ class _FileTransferScreenState extends State<FileTransferScreen> {
   }
 
   void _cancelTransfer(String transferId) {
-    context.read<FileTransferBloc>().add(
+    _fileTransferBloc.add(
           CancelTransfer(transferId),
         );
   }

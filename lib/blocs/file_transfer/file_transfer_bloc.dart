@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:ftp_file_transfer/blocs/file_browser/file_browser_bloc.dart';
+import 'package:ftp_file_transfer/blocs/file_browser/file_browser_event.dart';
+import 'package:get_it/get_it.dart';
 import '../../models/transfer_stats.dart';
 import '../../services/ftp_service.dart';
 
@@ -93,8 +96,8 @@ class FileTransferBloc extends Bloc<FileTransferEvent, FileTransferState> {
   final FtpService _ftpService;
   StreamSubscription<TransferStats>? _transferSubscription;
 
-  FileTransferBloc({required FtpService ftpService})
-      : _ftpService = ftpService,
+  FileTransferBloc()
+      : _ftpService = GetIt.I<FtpService>(),
         super(const FileTransferState()) {
     on<StartUpload>(_onStartUpload);
     on<StartDownload>(_onStartDownload);
@@ -187,7 +190,11 @@ class FileTransferBloc extends Bloc<FileTransferEvent, FileTransferState> {
         ));
       },
       onDone: () {
+        Future.delayed(
+          const Duration(milliseconds: 2000),
+        );
         _transferSubscription = null;
+
       },
     );
   }

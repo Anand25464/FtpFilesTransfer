@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:get_it/get_it.dart';
 import '../blocs/file_browser/file_browser_bloc.dart';
 import '../blocs/file_browser/file_browser_event.dart';
 import '../blocs/file_browser/file_browser_state.dart';
@@ -19,11 +20,13 @@ class FileBrowserScreen extends StatefulWidget {
 }
 
 class _FileBrowserScreenState extends State<FileBrowserScreen> {
+  FileBrowserBloc _fileBrowserBloc = GetIt.I<FileBrowserBloc>();
+  FtpConnectionBloc _ftpConnectionBloc = GetIt.I<FtpConnectionBloc>();
   @override
   void initState() {
     super.initState();
     // Trigger initial directory load
-    context.read<FileBrowserBloc>().add(const LoadDirectory('/'));
+    _fileBrowserBloc.add(const LoadDirectory('/'));
   }
 
   @override
@@ -36,6 +39,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: BlocBuilder<FtpConnectionBloc, FtpConnectionState>(
+              bloc: _ftpConnectionBloc,
               builder: (context, state) {
                 return state.status == FtpConnectionStatus.connected
                     ? const ConnectionStatusWidget()
@@ -50,6 +54,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
         ],
       ),
       body: BlocConsumer<FileBrowserBloc, FileBrowserState>(
+        bloc: _fileBrowserBloc,
         listener: (context, state) {
           if (state.status == FileBrowserStatus.error && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +98,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                     icon: const Icon(Icons.refresh),
                     label: const Text('Refresh'),
                     onPressed: () {
-                      context.read<FileBrowserBloc>().add(RefreshCurrentDirectory());
+                     _fileBrowserBloc.add(RefreshCurrentDirectory());
                     },
                   ),
                 ],
@@ -115,7 +120,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                       tooltip: 'Go Up',
                       onPressed: state.canNavigateUp
                           ? () {
-                              context.read<FileBrowserBloc>().add(
+                        _fileBrowserBloc.add(
                                     NavigateUp(state.currentPath),
                                   );
                             }
@@ -137,7 +142,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
-                    context.read<FileBrowserBloc>().add(RefreshCurrentDirectory());
+                    _fileBrowserBloc.add(RefreshCurrentDirectory());
                   },
                   child: ListView.separated(
                     itemCount: state.files.length,
@@ -181,7 +186,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
   void _handleFileTap(FtpFile file) {
     if (file.isDirectory) {
       // Navigate to directory
-      context.read<FileBrowserBloc>().add(LoadDirectory(file.fullPath));
+      _fileBrowserBloc.add(LoadDirectory(file.fullPath));
     } else {
       // Show file options
       _showFileOptions(file);
@@ -249,8 +254,8 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
             ElevatedButton(
               onPressed: () {
                 if (controller.text.isNotEmpty) {
-                  final currentState = context.read<FileBrowserBloc>().state;
-                  context.read<FileBrowserBloc>().add(
+                  final currentState = _fileBrowserBloc.state;
+                  _fileBrowserBloc.add(
                         CreateDirectory(
                           name: controller.text,
                           currentPath: currentState.currentPath,
@@ -273,7 +278,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
       final file = result.files.first;
       if (file.path != null) {
         // We need to navigate to the upload screen
-        final currentState = context.read<FileBrowserBloc>().state;
+        final currentState = _fileBrowserBloc.state;
         
         // Navigate to transfer screen with file and remote path information
         Navigator.of(context).pushNamed(
@@ -320,7 +325,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                context.read<FileBrowserBloc>().add(DeleteFile(file));
+                _fileBrowserBloc.add(DeleteFile(file));
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -336,9 +341,9 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
   }
 
   void _reconnect() {
-    final connectionState = context.read<FtpConnectionBloc>().state;
+    final connectionState = _ftpConnectionBloc.state;
     if (connectionState.currentServer != null) {
-      context.read<FtpConnectionBloc>().add(
+      _ftpConnectionBloc.add(
             FtpConnect(connectionState.currentServer!),
           );
     } else {
